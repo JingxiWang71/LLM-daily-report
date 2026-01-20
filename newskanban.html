@@ -1,1 +1,686 @@
+<!doctype html>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>AI 大模型新闻看板（2026-01-20）</title>
 
+
+<style>
+/* 基础变量系统 - 更细腻的色彩与尺寸体系 */
+:root{
+  --bg:#f7f8fb;
+  --fg:#0f172a;
+  --sub:#64748b;
+  --sub-light:#94a3b8;
+  --line:#e2e8f0;
+  --line-dark:#cbd5e1;
+  --card:#ffffff;
+  --card-hover:#fefefe;
+  --accent:#4f46e5;
+  --accent-light:#6366f1;
+  --accent-dark:#4338ca;
+  --accent-opacity-5:rgba(79,70,229,.05);
+  --accent-opacity-10:rgba(79,70,229,.10);
+  --accent-opacity-15:rgba(79,70,229,.15);
+  --radius-sm:8px;
+  --radius-md:12px;
+  --radius-lg:16px;
+  --radius-xl:20px;
+  --radius-full:9999px;
+  --shadow-xs:0 1px 2px rgba(15,23,42,.04);
+  --shadow-sm:0 2px 4px rgba(15,23,42,.06);
+  --shadow-md:0 4px 12px rgba(15,23,42,.08);
+  --shadow-lg:0 8px 24px rgba(15,23,42,.12);
+  --transition-fast:0.15s ease;
+  --transition-normal:0.25s ease;
+  --transition-slow:0.35s ease;
+  --spacing-xs:4px;
+  --spacing-sm:8px;
+  --spacing-md:16px;
+  --spacing-lg:24px;
+  --spacing-xl:32px;
+  --content-max-width:1180px;
+}
+
+/* 深色模式优化 - 更自然的暗色调 */
+@media (prefers-color-scheme: dark){
+  :root{
+    --bg:#0f172a; 
+    --fg:#f8fafc; 
+    --sub:#94a3b8;
+    --sub-light:#cbd5e1;
+    --line:#1e293b;
+    --line-dark:#334155;
+    --card:#1e293b;
+    --card-hover:#273449;
+    --accent:#818cf8;
+    --accent-light:#94a3b8;
+    --accent-dark:#6366f1;
+    --accent-opacity-5:rgba(129,140,248,.05);
+    --accent-opacity-10:rgba(129,140,248,.10);
+    --accent-opacity-15:rgba(129,140,248,.15);
+    --shadow-xs:0 1px 2px rgba(0,0,0,.1);
+    --shadow-sm:0 2px 4px rgba(0,0,0,.15);
+    --shadow-md:0 4px 12px rgba(0,0,0,.2);
+    --shadow-lg:0 8px 24px rgba(0,0,0,.25);
+  }
+}
+
+/* 基础重置与全局样式 - 更规范的基础层 */
+*,*::before,*::after{
+  box-sizing:border-box;
+  margin:0;
+  padding:0;
+}
+html{
+  scroll-behavior:smooth; /* 平滑滚动 */
+  -webkit-text-size-adjust:100%;
+}
+html,body{
+  height:100%;
+  width:100%;
+}
+body{
+  background:var(--bg); 
+  color:var(--fg);
+  font:16px/1.65 system-ui,-apple-system,Segoe UI,Roboto,Inter,"PingFang SC","Hiragino Sans GB","Microsoft Yahei",Arial,sans-serif;
+  -webkit-font-smoothing:antialiased; 
+  -moz-osx-font-smoothing:grayscale;
+  line-height:1.65;
+  letter-spacing:0.2px;
+}
+a{
+  color:inherit;
+  text-decoration:none;
+  transition:color var(--transition-fast);
+}
+:focus-visible{
+  outline:2px solid var(--accent);
+  outline-offset:2px;
+  border-radius:var(--radius-sm);
+}
+::-webkit-scrollbar{
+  width:8px;
+  height:8px;
+}
+::-webkit-scrollbar-track{
+  background:var(--accent-opacity-5);
+  border-radius:var(--radius-full);
+}
+::-webkit-scrollbar-thumb{
+  background:var(--sub-light);
+  border-radius:var(--radius-full);
+}
+::-webkit-scrollbar-thumb:hover{
+  background:var(--accent-light);
+}
+
+/* 顶部与筛选条 - 更精致的导航体验 */
+.header-wrap{
+  max-width:var(--content-max-width);
+  margin:var(--spacing-lg) auto var(--spacing-sm);
+  padding:0 var(--spacing-md);
+}
+h1{
+  margin:6px 0 4px;
+  font-size:32px;
+  letter-spacing:0.5px;
+  font-weight:700;
+  background:linear-gradient(135deg, var(--fg), var(--sub));
+  -webkit-background-clip:text;
+  background-clip:text;
+  color:transparent;
+}
+.time{
+  color:var(--sub);
+  font-size:14px;
+  display:block;
+  margin-top:var(--spacing-xs);
+}
+
+/* 筛选控件 - 更流畅的交互与视觉 */
+.controls{
+  position:sticky; 
+  top:0; 
+  z-index:30;
+  max-width:var(--content-max-width); 
+  margin:var(--spacing-sm) auto var(--spacing-lg); 
+  padding:var(--spacing-md) var(--spacing-md);
+  display:flex; 
+  gap:var(--spacing-md); 
+  flex-wrap:wrap; 
+  align-items:center;
+  backdrop-filter:saturate(1.2) blur(8px);
+  background:linear-gradient(180deg, rgba(255,255,255,.85), rgba(255,255,255,.7));
+  border-bottom:1px solid var(--line);
+  border-radius:var(--radius-lg) var(--radius-lg) 0 0;
+  box-shadow:var(--shadow-sm);
+}
+@media (prefers-color-scheme: dark){
+  .controls{
+    background:linear-gradient(180deg, rgba(30,41,59,.85), rgba(30,41,59,.7));
+  }
+}
+select,input[type="search"]{
+  padding:11px 16px;
+  border-radius:var(--radius-md);
+  border:1px solid var(--line);
+  outline:none;
+  min-width:200px;
+  background:var(--card);
+  color:var(--fg);
+  font-size:14px;
+  transition:all var(--transition-fast);
+  box-shadow:inset 0 1px 2px var(--accent-opacity-5);
+}
+input[type="search"]{
+  flex:1 1 320px;
+}
+select:hover,input[type="search"]:hover{
+  border-color:var(--line-dark);
+}
+select:focus,input[type="search"]:focus{
+  border-color:var(--accent);
+  box-shadow:0 0 0 3px var(--accent-opacity-10);
+}
+select option{
+  background:var(--card);
+  color:var(--fg);
+  padding:8px;
+}
+
+/* 日期分类标签 - 更精致的选中态与交互 */
+.date-tabs {
+  display: flex;
+  gap:var(--spacing-sm);
+  margin:var(--spacing-lg) auto var(--spacing-sm);
+  padding:0 var(--spacing-md);
+  max-width:var(--content-max-width);
+  flex-wrap:wrap;
+}
+.date-tab {
+  padding:9px 20px;
+  border-radius:var(--radius-full);
+  background:var(--card);
+  border:1px solid var(--line);
+  cursor:pointer;
+  font-size:14px;
+  font-weight:500;
+  transition:all var(--transition-normal);
+  position:relative;
+  overflow:hidden;
+}
+.date-tab::before{
+  content:"";
+  position:absolute;
+  top:0;
+  left:-100%;
+  width:100%;
+  height:100%;
+  background:var(--accent-opacity-5);
+  transition:left var(--transition-normal);
+}
+.date-tab:hover::before{
+  left:0;
+}
+.date-tab.active {
+  background:var(--accent);
+  color:white;
+  border-color:var(--accent);
+  box-shadow:0 2px 8px var(--accent-opacity-15);
+}
+.date-tab:hover:not(.active) {
+  background:var(--accent-opacity-5);
+  border-color:var(--line-dark);
+}
+
+/* 主容器 */
+.wrap{
+  max-width:var(--content-max-width);
+  margin:0 auto;
+  padding:0 var(--spacing-md) var(--spacing-xl);
+}
+
+/* 板块与卡片 - 更强的视觉层次 */
+.sec{
+  scroll-margin-top:90px; 
+  margin-top:var(--spacing-xl);
+}
+.sec-hd{
+  margin:var(--spacing-lg) 0 var(--spacing-md); 
+  font-size:22px; 
+  font-weight:700;
+  display:flex; 
+  align-items:center; 
+  gap:var(--spacing-sm);
+}
+.sec-hd span{
+  padding:6px 12px 6px 14px;
+  border-left:4px solid var(--accent);
+  background:linear-gradient(90deg,var(--accent-opacity-10),transparent);
+  border-radius:var(--radius-sm) var(--radius-full) var(--radius-full) var(--radius-sm);
+  letter-spacing:0.3px;
+}
+
+/* 网格布局 - 更合理的响应式 */
+.grid{ 
+  display:grid; 
+  grid-template-columns:repeat(auto-fill,minmax(320px,1fr)); 
+  gap:var(--spacing-md); 
+}
+
+/* 卡片 - 更细腻的悬浮态与视觉质感 */
+.card{
+  background:var(--card); 
+  border-radius:var(--radius-lg); 
+  padding:var(--spacing-md);
+  border:1px solid var(--line);
+  box-shadow:var(--shadow-sm);
+  transition:all var(--transition-normal);
+  position:relative;
+  overflow:hidden;
+}
+.card::before{
+  content:"";
+  position:absolute;
+  top:0;
+  left:0;
+  width:4px;
+  height:100%;
+  background:var(--accent-opacity-10);
+  transition:width var(--transition-normal);
+}
+.card:hover{ 
+  transform:translateY(-4px); 
+  box-shadow:var(--shadow-md);
+  border-color:var(--line-dark);
+  background:var(--card-hover);
+}
+.card:hover::before{
+  width:8px;
+  background:var(--accent);
+}
+
+/* 卡片内容 - 更舒适的排版 */
+.title{ 
+  margin:0 0 var(--spacing-sm); 
+  font-size:18px; 
+  line-height:1.4;
+  font-weight:600;
+}
+.title a{ 
+  color:var(--fg); 
+  display:-webkit-box; 
+  -webkit-line-clamp:2; 
+  -webkit-box-orient:vertical; 
+  overflow:hidden; 
+}
+.title a:hover{ 
+  color:var(--accent); 
+  text-decoration:underline;
+  text-underline-offset:4px;
+}
+
+.meta{ 
+  color:var(--sub); 
+  font-size:13px; 
+  margin-bottom:var(--spacing-xs);
+  display:flex;
+  align-items:center;
+  gap:var(--spacing-sm);
+}
+.meta::after{
+  content:"";
+  display:inline-block;
+  width:2px;
+  height:2px;
+  border-radius:50%;
+  background:var(--sub);
+}
+
+.recap{ 
+  margin:0.5em 0 0.3em; 
+  line-height:1.7;
+  color:var(--sub);
+  font-size:15px;
+  display:-webkit-box; 
+  -webkit-line-clamp:4; 
+  -webkit-box-orient:vertical; 
+  overflow:hidden; 
+}
+
+.more{ 
+  margin-top:var(--spacing-sm);
+}
+.more a{ 
+  color:var(--accent); 
+  font-weight:600;
+  font-size:14px;
+  display:inline-flex;
+  align-items:center;
+  gap:4px;
+}
+.more a:hover{ 
+  text-decoration:underline;
+  text-underline-offset:4px;
+  color:var(--accent-dark);
+}
+.more a::after{
+  content:"→";
+  font-size:12px;
+  transition:transform var(--transition-fast);
+}
+.more a:hover::after{
+  transform:translateX(2px);
+}
+
+/* 空状态 - 更友好的视觉表现 */
+.empty-state {
+  text-align: center;
+  padding:var(--spacing-xl) var(--spacing-md);
+  color:var(--sub);
+  font-size:16px;
+  background:var(--accent-opacity-5);
+  border-radius:var(--radius-lg);
+  border:1px dashed var(--line);
+  margin:var(--spacing-lg) 0;
+}
+#emptyHint{
+  color:var(--sub); 
+  text-align:center; 
+  margin:var(--spacing-lg) 0; 
+  font-size:14px;
+  background:var(--accent-opacity-5); 
+  border:1px dashed var(--accent-opacity-15);
+  padding:var(--spacing-sm) var(--spacing-md); 
+  border-radius:var(--radius-md);
+  transition:all var(--transition-fast);
+}
+#emptyHint:hover{
+  background:var(--accent-opacity-10);
+}
+.hidden{
+  display:none!important;
+}
+
+.date-content { 
+  display:none; 
+  animation:fadeIn var(--transition-normal) ease forwards;
+}
+.date-content.active { 
+  display:block; 
+}
+
+/* 页脚 - 更精致的视觉 */
+footer{ 
+  max-width:var(--content-max-width); 
+  margin:var(--spacing-lg) auto var(--spacing-xl); 
+  padding:0 var(--spacing-md); 
+  color:var(--sub); 
+  font-size:13px;
+  border-top:1px solid var(--line);
+  padding-top:var(--spacing-lg);
+}
+
+/* 趋势卡片 - 更高级的视觉与交互 */
+.trends-top{
+  max-width:var(--content-max-width); 
+  margin:var(--spacing-sm) auto var(--spacing-md);
+  padding:0 var(--spacing-md);
+  display:grid; 
+  grid-template-columns:repeat(2,minmax(0,1fr)); 
+  gap:var(--spacing-md);
+}
+@media (max-width:1024px){ 
+  .trends-top{ 
+    grid-template-columns:1fr; 
+  } 
+}
+
+.t-card{
+  background:var(--card);
+  border:1px solid var(--line);
+  border-radius:var(--radius-xl);
+  box-shadow:var(--shadow-sm);
+  overflow:hidden;
+  transition:all var(--transition-normal);
+}
+.t-card:hover{ 
+  transform:translateY(-5px); 
+  box-shadow:var(--shadow-lg);
+  border-color:var(--line-dark);
+}
+
+.t-hd{
+  display:flex; 
+  align-items:center; 
+  justify-content:space-between;
+  padding:var(--spacing-sm) var(--spacing-md); 
+  font-weight:600; 
+  font-size:16px;
+  background:linear-gradient(90deg,var(--accent-opacity-5),transparent);
+  border-bottom:1px solid var(--line);
+}
+.t-hd::after{
+  content:"📊";
+  font-size:18px;
+  opacity:0.7;
+}
+
+.t-body{ 
+  height:340px; 
+  position:relative; 
+}
+.t-embed{ 
+  position:absolute; 
+  inset:var(--spacing-sm); 
+  border-radius:var(--radius-lg); 
+  background:var(--bg); 
+  overflow:hidden; 
+  border:1px solid var(--line);
+}
+.t-embed iframe{ 
+  width:100%; 
+  height:100%; 
+  border:0; 
+  border-radius:var(--radius-sm); 
+}
+
+/* 动画效果 */
+@keyframes fadeIn {
+  from{
+    opacity:0;
+    transform:translateY(10px);
+  }
+  to{
+    opacity:1;
+    transform:translateY(0);
+  }
+}
+
+/* 响应式优化 - 移动端适配 */
+@media (max-width:768px){
+  :root{
+    --spacing-md:12px;
+    --spacing-lg:16px;
+  }
+  h1{
+    font-size:24px;
+  }
+  .grid{
+    grid-template-columns:1fr;
+  }
+  .controls{
+    padding:12px 16px;
+  }
+  select,input[type="search"]{
+    min-width:100%;
+    flex:1 1 100%;
+  }
+  .date-tab{
+    padding:8px 16px;
+    font-size:13px;
+  }
+  .sec-hd{
+    font-size:20px;
+  }
+  .card{
+    padding:12px;
+  }
+  .title{
+    font-size:17px;
+  }
+  .t-body{
+    height:280px;
+  }
+}
+</style>
+
+
+<div class="header-wrap">
+  <h1>AI 大模型新闻看板</h1>
+  <div class="time">2026-01-20</div>
+</div>
+
+<div class="controls">
+  <select id="secSel"><option value="">全部板块</option>
+  <option value="一、权威观点/报告">一、权威观点/报告</option><option value="二、产品/技术动态">二、产品/技术动态</option></select>
+  <input id="search" type="search" placeholder="搜索标题 / 概要 / 标签…">
+</div>
+
+<div class="date-tabs">
+  <div class="date-tab active" data-date-category="today">📌 今日（2026-01-20）</div>
+  <div class="date-tab" data-date-category="yesterday">🗓️ 昨日</div>
+  <div class="date-tab" data-date-category="beforeYesterday">📅 前日</div>
+</div>
+
+<!-- ===== 两张图卡片 ===== -->
+<div style="display:flex;gap:20px;max-width:1200px;margin:20px auto;flex-wrap:wrap;align-items:flex-start;">
+  <div class="trend-card" style="flex:1 1 48%;min-width:360px;background:#fff;border-radius:16px;padding:20px;box-shadow:0 4px 16px rgba(0,0,0,0.06);">
+    <h2 style="font-size:20px;margin-bottom:12px;font-weight:600;color:#333;">📈 百度搜索指数</h2>
+    <div class="trend-chart-wrapper" style="width:100%;overflow:hidden;"><div id="chart-trends" style="width:100%;height:400px;"></div></div>
+  </div>
+
+  <div class="trend-card" style="flex:1 1 48%;min-width:360px;background:#fff;border-radius:16px;padding:20px;box-shadow:0 4px 16px rgba(0,0,0,0.06);">
+    <h2 style="font-size:20px;margin-bottom:12px;font-weight:600;color:#333;">📊 百度资讯指数</h2>
+    <div class="trend-chart-wrapper" style="width:100%;overflow:hidden;"><div id="chart-consult" style="width:100%;height:400px;"></div></div>
+  </div>
+</div>
+
+<div class="wrap">
+  <main id="main">
+    <p id="emptyHint" class="hidden">当前筛选无结果，换个关键词试试～</p>
+    <div id="today-content" class="date-content active"><section id="一、权威观点/报告" class="sec"><h2 class="sec-hd"><span>一、权威观点/报告</span></h2><div class="grid"><article class="card" data-sec="一、权威观点/报告">
+    <h3 class="title"><a href="https://www.x.com/rohanpaul_ai/status/2013462696071741595" target="_blank" rel="noopener">前谷歌高管莫·加瓦德阐述对智能本质的定义</a></h3>
+    <div class="meta">（2026-01-20 12:04）</div><p class="recap" title="前谷歌高管莫·加瓦德在一档视频节目中阐述了他对智能的定义，认为智能本身不是物理属性，其产生不依赖碳基、硅基或未来的量子基结构。他指出，人类停止将自身智能强加于机器时，机器内部才能产生智能。">前谷歌高管莫·加瓦德在一档视频节目中阐述了他对智能的定义，认为智能本身不是物理属性，其产生不依赖碳基、硅基或未来的量子基结构。他指出，人类停止将自身智能强加于机器时，机器内部才能产生智能。</p>
+    <div class="more"><a href="https://www.x.com/rohanpaul_ai/status/2013462696071741595" target="_blank" rel="noopener">阅读原文</a></div>
+  </article><article class="card" data-sec="一、权威观点/报告">
+    <h3 class="title"><a href="https://www.x.com/rohanpaul_ai/status/2013456747235565939" target="_blank" rel="noopener">Node.js创造者Ryan Dahl发表观点：人类写代码的时代已经结束</a></h3>
+    <div class="meta">（2026-01-20 11:41）</div><p class="recap" title="Node.js创造者Ryan Dahl在社交媒体上发表观点，认为人类直接编写代码语法的时代已经结束，这可能会让软件工程师感到不安。">Node.js创造者Ryan Dahl在社交媒体上发表观点，认为人类直接编写代码语法的时代已经结束，这可能会让软件工程师感到不安。</p>
+    <div class="more"><a href="https://www.x.com/rohanpaul_ai/status/2013456747235565939" target="_blank" rel="noopener">阅读原文</a></div>
+  </article><article class="card" data-sec="一、权威观点/报告">
+    <h3 class="title"><a href="https://www.youtube.com/watch?v=cfxIUEpqwnA" target="_blank" rel="noopener">【优质访谈】Hexagon Robotics 首席技术官谈物理 AI 安全要求与数字化双胞胎基础</a></h3>
+    <div class="meta">（2026-01-20 10:36）</div><p class="recap" title="Hexagon Robotics 首席技术官阐述物理 AI 在现实世界部署时，因可能造成人身伤害，其标准远高于数字 AI。他强调高精度数字化双胞胎是物理 AI 训练与保障功能安全的基础，并指出实现约束环境下的自主操作仍需1-3年。">Hexagon Robotics 首席技术官阐述物理 AI 在现实世界部署时，因可能造成人身伤害，其标准远高于数字 AI。他强调高精度数字化双胞胎是物理 AI 训练与保障功能安全的基础，并指出实现约束环境下的自主操作仍需1-3年。</p>
+    <div class="more"><a href="https://www.youtube.com/watch?v=cfxIUEpqwnA" target="_blank" rel="noopener">阅读原文</a></div>
+  </article><article class="card" data-sec="一、权威观点/报告">
+    <h3 class="title"><a href="https://www.youtube.com/watch?v=3XVDtPU8xKE" target="_blank" rel="noopener">【优质访谈】a16z AI团队解析AI应用三大投资主题：现有软件AI化、软件替代人力及专有数据应用</a></h3>
+    <div class="meta">来源：
+
+时间：2026-01-20T00:17:00+08:00
+
+链接：https://www.youtube.com/watch?v=3XVDtPU8xKE（2026-01-20 00:17）</div><p class="recap" title="a16z AI应用团队在访谈中阐述了他们对AI应用周期的思考，认为这是软件史上规模最大、速度最快的产品转型。他们提出了三大投资主题：现有软件类别向AI原生转型、软件直接替代人工的新类别，以及基于专有数据和闭环工作流的应用。">a16z AI应用团队在访谈中阐述了他们对AI应用周期的思考，认为这是软件史上规模最大、速度最快的产品转型。他们提出了三大投资主题：现有软件类别向AI原生转型、软件直接替代人工的新类别，以及基于专有数据和闭环工作流的应用。</p>
+    <div class="more"><a href="https://www.youtube.com/watch?v=3XVDtPU8xKE" target="_blank" rel="noopener">阅读原文</a></div>
+  </article></div></section><section id="二、产品/技术动态" class="sec"><h2 class="sec-hd"><span>二、产品/技术动态</span></h2><div class="grid"><article class="card" data-sec="二、产品/技术动态">
+    <h3 class="title"><a href="http://mp.weixin.qq.com/s?__biz=MzI3MTA0MTk1MA==&mid=2652666007&idx=2&sn=a7e243396ca49031b4d0ac39d8194af6&chksm=f04510c686777b85416b470918c239d776f5fad1676eea8ea4794bcc95806a1c787fe3ff67c9&scene=0#rd" target="_blank" rel="noopener">【优质论文/技术】Anthropic发现LLM安全漏洞及提出激活值钳制方法</a></h3>
+    <div class="meta">（2026-01-20 13:03）</div><p class="recap" title="Anthropic研究发现大型语言模型在情感高压对话中可能偏离“助手轴”，导致安全护栏失效。该研究提出“激活值钳制”技术，通过物理干预神经元激活值以防止模型输出有害内容。此方法在降低有害响应率的同时，对模型逻辑能力影响较小。">Anthropic研究发现大型语言模型在情感高压对话中可能偏离“助手轴”，导致安全护栏失效。该研究提出“激活值钳制”技术，通过物理干预神经元激活值以防止模型输出有害内容。此方法在降低有害响应率的同时，对模型逻辑能力影响较小。</p>
+    <div class="more"><a href="http://mp.weixin.qq.com/s?__biz=MzI3MTA0MTk1MA==&mid=2652666007&idx=2&sn=a7e243396ca49031b4d0ac39d8194af6&chksm=f04510c686777b85416b470918c239d776f5fad1676eea8ea4794bcc95806a1c787fe3ff67c9&scene=0#rd" target="_blank" rel="noopener">阅读原文</a></div>
+  </article><article class="card" data-sec="二、产品/技术动态">
+    <h3 class="title"><a href="https://www.x.com/rohanpaul_ai/status/2013466515245539680" target="_blank" rel="noopener">【优质论文/技术】研究者提出自动构建和评估深度网络研究代理的框架</a></h3>
+    <div class="meta">（2026-01-20 12:20）</div><p class="recap" title="研究者提出DeepResearchEval，一种自动构建网络研究任务和评估研究代理的框架。该方法通过创建用户角色生成复杂任务，并评估报告质量与事实准确性。基于100个任务的测试显示，不同系统表现存在显著差距。">研究者提出DeepResearchEval，一种自动构建网络研究任务和评估研究代理的框架。该方法通过创建用户角色生成复杂任务，并评估报告质量与事实准确性。基于100个任务的测试显示，不同系统表现存在显著差距。</p>
+    <div class="more"><a href="https://www.x.com/rohanpaul_ai/status/2013466515245539680" target="_blank" rel="noopener">阅读原文</a></div>
+  </article><article class="card" data-sec="二、产品/技术动态">
+    <h3 class="title"><a href="https://www.x.com/rohanpaul_ai/status/2013466075489542270" target="_blank" rel="noopener">【优质论文/技术】Anthropic研究发现语言模型内部存在‘助手轴’，用于稳定行为</a></h3>
+    <div class="meta">（2026-01-20 12:18）</div><p class="recap" title="Anthropic发表新研究，识别出语言模型内部一个可测量的、对应于‘助手’角色的单一模式。当此模式减弱时，模型易出现角色偏移或给出风险回答；通过添加导向信号锚定此模式，能有效抵抗越狱提示，保持回答一致性且在普通任务上性能稳定。">Anthropic发表新研究，识别出语言模型内部一个可测量的、对应于‘助手’角色的单一模式。当此模式减弱时，模型易出现角色偏移或给出风险回答；通过添加导向信号锚定此模式，能有效抵抗越狱提示，保持回答一致性且在普通任务上性能稳定。</p>
+    <div class="more"><a href="https://www.x.com/rohanpaul_ai/status/2013466075489542270" target="_blank" rel="noopener">阅读原文</a></div>
+  </article><article class="card" data-sec="二、产品/技术动态">
+    <h3 class="title"><a href="https://www.x.com/rohanpaul_ai/status/2013462698940309947" target="_blank" rel="noopener">【优质论文/技术】新方法解决文本到图像模型中的错误概念问题</a></h3>
+    <div class="meta">（2026-01-20 12:04）</div><p class="recap" title="研究人员提出一种名为&quot;拒绝采样微调&quot;的新方法，旨在缓解文本到图像模型中存在的错误概念和偏见问题。该方法通过纠正模型对特定概念的误读，提升生成图像的准确性。">研究人员提出一种名为&quot;拒绝采样微调&quot;的新方法，旨在缓解文本到图像模型中存在的错误概念和偏见问题。该方法通过纠正模型对特定概念的误读，提升生成图像的准确性。</p>
+    <div class="more"><a href="https://www.x.com/rohanpaul_ai/status/2013462698940309947" target="_blank" rel="noopener">阅读原文</a></div>
+  </article></div></section></div>
+    <div id="yesterday-content" class="date-content"><div class="empty-state">昨日暂无数据</div></div>
+    <div id="beforeYesterday-content" class="date-content"><div class="empty-state">前日暂无数据</div></div>
+  </main>
+</div>
+
+<footer>生成自 n8n · 本页仅作资讯聚合导航，版权归原文方所有</footer>
+
+<!-- echarts 加载（只加载一次） -->
+<script src="https://cdn.jsdelivr.net/npm/echarts/dist/echarts.min.js"></script>
+
+<!-- 图表统一初始化 -->
+<script>
+(function initCharts(){
+  
+    (function(){
+      const dom = document.getElementById("chart-trends");
+      if (!dom) return;
+      const chart = echarts.init(dom);
+      chart.setOption({"backgroundColor":"transparent","tooltip":{"trigger":"axis","backgroundColor":"rgba(15,23,42,0.85)","borderWidth":0,"textStyle":{"color":"#fff"},"axisPointer":{"type":"line","lineStyle":{"width":1.2,"color":"#4f46e5"}}},"legend":{"top":10,"textStyle":{"color":"#0f172a"}},"grid":{"left":50,"right":30,"top":60,"bottom":50},"xAxis":{"type":"category","data":[],"axisLabel":{"color":"#64748b","rotate":45,"margin":12},"axisLine":{"lineStyle":{"color":"#ddd"}},"splitLine":{"show":false}},"yAxis":{"type":"value","axisLabel":{"color":"#64748b"},"axisLine":{"show":false},"splitLine":{"show":false}},"color":["#678CC0","#F0B96E","#264592","#B9D8EF","#747985","#F1D2B8"],"series":[]});
+      window.addEventListener('resize', () => chart.resize());
+    })();
+  
+
+    (function(){
+      const dom = document.getElementById("chart-consult");
+      if (!dom) return;
+      const chart = echarts.init(dom);
+      chart.setOption({"backgroundColor":"transparent","tooltip":{"trigger":"axis","backgroundColor":"rgba(15,23,42,0.85)","borderWidth":0,"textStyle":{"color":"#fff"},"axisPointer":{"type":"line","lineStyle":{"width":1.2,"color":"#4f46e5"}}},"legend":{"top":10,"textStyle":{"color":"#0f172a"}},"grid":{"left":50,"right":30,"top":60,"bottom":50},"xAxis":{"type":"category","data":[],"axisLabel":{"color":"#64748b","rotate":45,"margin":12},"axisLine":{"lineStyle":{"color":"#ddd"}},"splitLine":{"show":false}},"yAxis":{"type":"value","axisLabel":{"color":"#64748b"},"axisLine":{"show":false},"splitLine":{"show":false}},"color":["#678CC0","#F0B96E","#264592","#B9D8EF","#747985","#F1D2B8"],"series":[]});
+      window.addEventListener('resize', () => chart.resize());
+    })();
+  
+})();
+</script>
+
+<script>
+const secSel=document.getElementById('secSel');
+const search=document.getElementById('search');
+const emptyEl=document.getElementById('emptyHint');
+const dateTabs=document.querySelectorAll('.date-tab');
+const dateContents=document.querySelectorAll('.date-content');
+
+dateTabs.forEach(tab=>{
+  tab.addEventListener('click',()=>{
+    dateTabs.forEach(t=>t.classList.remove('active'));
+    tab.classList.add('active');
+    const target=tab.dataset.dateCategory;
+    dateContents.forEach(c=>c.classList.remove('active'));
+    document.getElementById(target+'-content').classList.add('active');
+    filter();
+  });
+});
+
+function debounce(fn,wait){let t;return(...a)=>{clearTimeout(t);t=setTimeout(()=>fn(...a),wait||180)};}
+function filter(){
+  const kw=(search.value||'').trim().toLowerCase();
+  const sec=secSel.value;
+  const active=document.querySelector('.date-content.active');
+  let total=0;
+  if(!active)return;
+  active.querySelectorAll('section').forEach(secEl=>{
+    let visible=0;
+    secEl.querySelectorAll('.card').forEach(card=>{
+      const inSec=!sec||card.dataset.sec===sec;
+      const hit=!kw||card.textContent.toLowerCase().includes(kw);
+      const show=inSec&&hit;
+      card.classList.toggle('hidden',!show);
+      if(show){visible++;total++;}
+    });
+    secEl.classList.toggle('hidden',visible===0);
+  });
+  emptyEl.classList.toggle('hidden',total!==0);
+}
+search.addEventListener('input',debounce(filter,180));
+secSel.addEventListener('change',filter);
+filter();
+
+window.dispatchEvent(new Event('resize'));
+</script>
